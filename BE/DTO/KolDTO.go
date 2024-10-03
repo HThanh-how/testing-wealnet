@@ -14,7 +14,7 @@ type KolDTO struct {
 	RewardID             int64  `gorm:"column:rewardid"`
 	PaymentMethodID      int64  `gorm:"column:paymentmethodid"`
 	TestimonialsID       int64  `gorm:"column:testimonialsid"`
-	VerificationStatus   string `gorm:"-"` // Ignored by GORM, will be set manually
+	VerificationStatus   string `gorm:"column:verificationstatus"`
 	Enabled              bool   `gorm:"column:enabled"`
 	ActiveDate           string `gorm:"column:activedate"`
 	Active               bool   `gorm:"column:active"`
@@ -27,5 +27,5 @@ type KolDTO struct {
 	Code                 string `gorm:"column:code"`
 	PortraitRightURL     string `gorm:"column:portraitrighturl"`
 	PortraitLeftURL      string `gorm:"column:portraitlefturl"`
-	LivenessStatus       string `gorm:"-"` // Ignored by GORM, will be set manually
+	LivenessStatus       string `gorm:"column:livenessstatus"`
 }
