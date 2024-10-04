@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Box,
   Button,
@@ -28,30 +28,55 @@ import {
   Skeleton,
   SkeletonText,
   Flex,
-} from '@chakra-ui/react';
-import { CheckCircleIcon, NotAllowedIcon, ArrowUpIcon, ArrowDownIcon, SunIcon, MoonIcon, ChevronUpIcon, ChevronDownIcon } from '@chakra-ui/icons';
+} from "@chakra-ui/react";
+import {
+  CheckCircleIcon,
+  NotAllowedIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  SunIcon,
+  MoonIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+} from "@chakra-ui/icons";
 
 interface Kols {
   KolID: number;
-  Education: string;
+  UserProfileID: number;
   Language: string;
+  Education: string;
   ExpectedSalary: number;
   ExpectedSalaryEnable: boolean;
-  VerificationStatus: string;
-  LivenessStatus: string;
-  UserProfileID: number;
   ChannelSettingTypeID: number;
+  IDFrontURL: string;
+  IDBackURL: string;
+  PortraitURL: string;
   RewardID: number;
   PaymentMethodID: number;
   TestimonialsID: number;
+  VerificationStatus: string;
   Enabled: boolean;
   ActiveDate: Date;
+  Active: boolean;
+  CreatedBy: string;
+  CreatedDate: Date;
+  ModifiedBy: string;
+  ModifiedDate: Date;
+  IsRemove: boolean;
+  IsOnBoarding: boolean;
+  Code: string;
+  PortraitRightURL: string;
+  PortraitLeftURL: string;
+  LivenessStatus: string;
 }
 
 const Page = () => {
   const [kols, setKols] = useState<Kols[]>([]);
   const [filterText, setFilterText] = useState("");
-  const [sortBy, setSortBy] = useState<{ column: string; order: "asc" | "desc" }>({
+  const [sortBy, setSortBy] = useState<{
+    column: string;
+    order: "asc" | "desc";
+  }>({
     column: "KolID",
     order: "asc",
   });
@@ -67,13 +92,18 @@ const Page = () => {
   const totalPages = Math.ceil(kols.length / rowsPerPage); // Tính tổng số trang
 
   useEffect(() => {
+	if (colorMode !== "dark") {
+		toggleColorMode();
+	}
     fetchKols();
   }, []);
 
   const fetchKols = async () => {
     try {
       setLoading(true); // Bắt đầu tải
-      const response = await axios.get('https://testing-weallnet.vercel.app/kols?pageIndex=1&pageSize=40');
+      const response = await axios.get(
+        "https://testing-weallnet.vercel.app/kols?pageIndex=1&pageSize=40"
+      );
       setKols(response.data.kol);
     } catch (error) {
       console.error("Error fetching KOLs:", error);
@@ -83,7 +113,8 @@ const Page = () => {
   };
 
   const sortData = (column: string) => {
-    const order = sortBy.column === column && sortBy.order === "asc" ? "desc" : "asc";
+    const order =
+      sortBy.column === column && sortBy.order === "asc" ? "desc" : "asc";
     setSortBy({ column, order });
   };
 
@@ -93,7 +124,8 @@ const Page = () => {
       kol.KolID.toString().toLowerCase().includes(searchText) ||
       kol.Education.toLowerCase().includes(searchText) ||
       kol.Language.toLowerCase().includes(searchText) ||
-      (kol.ExpectedSalaryEnable && kol.ExpectedSalary.toString().includes(searchText)) ||
+      (kol.ExpectedSalaryEnable &&
+        kol.ExpectedSalary.toString().includes(searchText)) ||
       kol.VerificationStatus.toLowerCase().includes(searchText) ||
       kol.LivenessStatus.toLowerCase().includes(searchText)
     );
@@ -134,10 +166,10 @@ const Page = () => {
     onOpen();
   };
 
-  const scrollTable = (direction: 'up' | 'down') => {
+  const scrollTable = (direction: "up" | "down") => {
     if (tableRef.current) {
-      const scrollAmount = direction === 'up' ? -30 : 30; // Scroll by 30px
-      tableRef.current.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+      const scrollAmount = direction === "up" ? -30 : 30; // Scroll by 30px
+      tableRef.current.scrollBy({ top: scrollAmount, behavior: "smooth" });
     }
   };
 
@@ -150,7 +182,12 @@ const Page = () => {
 
   return (
     <Box p={5} bg={bgColor} minHeight="100vh">
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={5}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={5}
+      >
         <Heading as="h1">KoL List</Heading>
         <Box display="flex" alignItems="center">
           <IconButton
@@ -161,7 +198,12 @@ const Page = () => {
         </Box>
       </Box>
 
-      <Box mb={5} display="flex" justifyContent="space-between" alignItems="center">
+      <Box
+        mb={5}
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+      >
         <Input
           placeholder="Tìm kiếm"
           value={filterText}
@@ -173,13 +215,13 @@ const Page = () => {
             ml={4}
             icon={<ChevronUpIcon />}
             aria-label="Scroll up"
-            onClick={() => scrollTable('up')}
+            onClick={() => scrollTable("up")}
           />
           <IconButton
             ml={4}
             icon={<ChevronDownIcon />}
             aria-label="Scroll down"
-            onClick={() => scrollTable('down')}
+            onClick={() => scrollTable("down")}
           />
           <Select
             ml={4}
@@ -240,34 +282,83 @@ const Page = () => {
             overflow="auto"
             maxHeight="70vh"
             ref={tableRef}
-            style={{ position: 'relative', zIndex: 1 }}
+            style={{ position: "relative", zIndex: 1 }}
           >
             <Table variant="simple" position="relative">
               <Thead position="sticky" top={0} zIndex={10} bg={bgColor}>
                 <Tr>
                   <Th onClick={() => sortData("KolID")} cursor="pointer">
-                    ID {sortBy.column === "KolID" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
+                    ID{" "}
+                    {sortBy.column === "KolID" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
                   </Th>
                   <Th onClick={() => sortData("Education")} cursor="pointer">
-                    Education {sortBy.column === "Education" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
+                    Education{" "}
+                    {sortBy.column === "Education" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
                   </Th>
                   <Th onClick={() => sortData("Language")} cursor="pointer">
-                    Language {sortBy.column === "Language" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
+                    Language{" "}
+                    {sortBy.column === "Language" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
                   </Th>
-                  <Th onClick={() => sortData("ExpectedSalary")} cursor="pointer">
-                    Expected Salary {sortBy.column === "ExpectedSalary" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
+                  <Th
+                    onClick={() => sortData("ExpectedSalary")}
+                    cursor="pointer"
+                  >
+                    Expected Salary{" "}
+                    {sortBy.column === "ExpectedSalary" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
                   </Th>
-                  <Th onClick={() => sortData("VerificationStatus")} cursor="pointer">
-                    Verified {sortBy.column === "VerificationStatus" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
+                  <Th
+                    onClick={() => sortData("VerificationStatus")}
+                    cursor="pointer"
+                  >
+                    Verified{" "}
+                    {sortBy.column === "VerificationStatus" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
                   </Th>
-                  <Th onClick={() => sortData("LivenessStatus")} cursor="pointer">
-                    Liveness Status {sortBy.column === "LivenessStatus" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
+                  <Th
+                    onClick={() => sortData("LivenessStatus")}
+                    cursor="pointer"
+                  >
+                    Liveness Status{" "}
+                    {sortBy.column === "LivenessStatus" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
                   </Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {sortedKols.map((kol, index) => (
-                  <Tr key={kol.KolID} onClick={() => openModal(index)} cursor="pointer">
+                  <Tr
+                    key={kol.KolID}
+                    onClick={() => openModal(index)}
+                    cursor="pointer"
+                  >
                     <Td>{kol.KolID}</Td>
                     <Td>{kol.Education}</Td>
                     <Td>{kol.Language === "Vietnamese" ? "VN" : "EN"}</Td>
@@ -296,7 +387,12 @@ const Page = () => {
         </Box>
       )}
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" mt={4}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mt={4}
+      >
         <Button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
@@ -304,10 +400,21 @@ const Page = () => {
           Trang trước
         </Button>
         <Box>
-          Trang <Input type="number" value={currentPage} onChange={handlePageChange} width="60px" display="inline-block" textAlign="center" /> / {totalPages}
+          Trang{" "}
+          <Input
+            type="number"
+            value={currentPage}
+            onChange={handlePageChange}
+            width="60px"
+            display="inline-block"
+            textAlign="center"
+          />{" "}
+          / {totalPages}
         </Box>
         <Button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
           disabled={currentPage === totalPages}
         >
           Trang sau
@@ -319,33 +426,174 @@ const Page = () => {
         <ModalContent>
           <ModalHeader>Thông tin chi tiết KOL</ModalHeader>
           <ModalCloseButton />
-          <ModalBody maxHeight="400px" overflow="auto"> {/* Scroll cho modal */}
+          <ModalBody maxHeight="400px" overflow="auto">
+            {" "}
+            {/* Scroll cho modal */}
             {selectedKolIndex !== null && (
-              <Box>
-                <Heading as="h3" size="md">Thông tin cá nhân</Heading>
-                <p>ID: {kols[selectedKolIndex].KolID}</p>
-                <p>Giáo dục: {kols[selectedKolIndex].Education}</p>
-                <p>Ngôn ngữ: {kols[selectedKolIndex].Language === "Vietnamese" ? "VN" : "EN"}</p>
-                <Heading as="h3" size="md" mt={4}>Chi tiết công việc</Heading>
-                <p>Mức lương mong muốn: {kols[selectedKolIndex].ExpectedSalaryEnable ? kols[selectedKolIndex].ExpectedSalary : "N/A"}</p>
-                <p>Trạng thái xác minh: {kols[selectedKolIndex].VerificationStatus}</p>
-                <p>Trạng thái liveness: {kols[selectedKolIndex].LivenessStatus}</p>
-                <Heading as="h3" size="md" mt={4}>Thông tin khác</Heading>
-                <p>UserProfileID: {kols[selectedKolIndex].UserProfileID}</p>
-                <p>ChannelSettingTypeID: {kols[selectedKolIndex].ChannelSettingTypeID}</p>
-                <p>RewardID: {kols[selectedKolIndex].RewardID}</p>
-                <p>PaymentMethodID: {kols[selectedKolIndex].PaymentMethodID}</p>
-                <p>TestimonialsID: {kols[selectedKolIndex].TestimonialsID}</p>
-                <p>Enabled: {kols[selectedKolIndex].Enabled ? "Yes" : "No"}</p>
-                <p>Ngày kích hoạt: {new Date(kols[selectedKolIndex].ActiveDate).toLocaleDateString()}</p>
-              </Box>
+			
+			<Box>
+			  <Heading as="h3" size="md">
+				Thông tin cá nhân
+			  </Heading>
+			  <p>ID: {kols[selectedKolIndex].KolID}</p>
+			  <p>Giáo dục: {kols[selectedKolIndex].Education}</p>
+			  <p>
+				Ngôn ngữ:{" "}
+				{kols[selectedKolIndex].Language === "Vietnamese" ? "VN" : "EN"}
+			  </p>
+			  <Heading as="h3" size="md" mt={4}>
+				Chi tiết công việc
+			  </Heading>
+			  <p>
+				Mức lương mong muốn:{" "}
+				{kols[selectedKolIndex].ExpectedSalaryEnable
+				  ? kols[selectedKolIndex].ExpectedSalary
+				  : "N/A"}
+			  </p>
+			  <p>
+				Trạng thái xác minh:{" "}
+				{kols[selectedKolIndex].VerificationStatus === "Verified" ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>
+				Trạng thái liveness:{" "}
+				{kols[selectedKolIndex].LivenessStatus === "Passed" ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <Heading as="h3" size="md" mt={4}>
+				Thông tin khác
+			  </Heading>
+			  <p>UserProfileID: {kols[selectedKolIndex].UserProfileID}</p>
+			  <p>
+				ChannelSettingTypeID: {kols[selectedKolIndex].ChannelSettingTypeID}
+			  </p>
+			  <p>RewardID: {kols[selectedKolIndex].RewardID}</p>
+			  <p>PaymentMethodID: {kols[selectedKolIndex].PaymentMethodID}</p>
+			  <p>TestimonialsID: {kols[selectedKolIndex].TestimonialsID}</p>
+			  <p>
+				Đang hoạt động:{" "}
+				{kols[selectedKolIndex].Enabled ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>
+				Ngày kích hoạt:{" "}
+				{new Date(kols[selectedKolIndex].ActiveDate).toLocaleDateString()}
+			  </p>
+			  <p>
+				Hoạt động:{" "}
+				{kols[selectedKolIndex].Active ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>Người tạo: {kols[selectedKolIndex].CreatedBy}</p>
+			  <p>
+				Ngày tạo:{" "}
+				{new Date(kols[selectedKolIndex].CreatedDate).toLocaleDateString()}
+			  </p>
+			  <p>Người sửa đổi: {kols[selectedKolIndex].ModifiedBy}</p>
+			  <p>
+				Ngày sửa đổi:{" "}
+				{new Date(kols[selectedKolIndex].ModifiedDate).toLocaleDateString()}
+			  </p>
+			  <p>
+				Đã xóa:{" "}
+				{kols[selectedKolIndex].IsRemove ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>
+				Đang onboarding:{" "}
+				{kols[selectedKolIndex].IsOnBoarding ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>Mã: {kols[selectedKolIndex].Code}</p>
+			  <p>
+				URL chân dung phải:{" "}
+				<a
+				  href={kols[selectedKolIndex].PortraitRightURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL chân dung trái:{" "}
+				<a
+				  href={kols[selectedKolIndex].PortraitLeftURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL mặt trước CMND:{" "}
+				<a
+				  href={kols[selectedKolIndex].IDFrontURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL mặt sau CMND:{" "}
+				<a
+				  href={kols[selectedKolIndex].IDBackURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL chân dung:{" "}
+				<a
+				  href={kols[selectedKolIndex].PortraitURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			</Box>
             )}
           </ModalBody>
           <ModalFooter>
-            <Button mr={4} onClick={() => setSelectedKolIndex((prev) => (prev && prev > 0 ? prev - 1 : 0))} disabled={selectedKolIndex === 0}>
+            <Button
+              mr={4}
+              onClick={() =>
+                setSelectedKolIndex((prev) => (prev && prev > 0 ? prev - 1 : 0))
+              }
+              disabled={selectedKolIndex === 0}
+            >
               Trước
             </Button>
-            <Button onClick={() => setSelectedKolIndex((prev) => (prev !== null && prev < kols.length - 1 ? prev + 1 : prev))} disabled={selectedKolIndex === kols.length - 1}>
+            <Button
+              onClick={() =>
+                setSelectedKolIndex((prev) =>
+                  prev !== null && prev < kols.length - 1 ? prev + 1 : prev
+                )
+              }
+              disabled={selectedKolIndex === kols.length - 1}
+            >
               Sau
             </Button>
           </ModalFooter>
