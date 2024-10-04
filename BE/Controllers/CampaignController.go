@@ -60,3 +60,12 @@ func GetKolsController(context *gin.Context) {
 	KolsVM.TotalCount = int64(len(kols))
 	context.JSON(http.StatusOK, KolsVM)
 }
+// func GetKolsCountController(context *gin.Context) {
+//     count, err := Logic.CountKolsLogic()
+//     if err != nil {
+//         context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+//         return
+//     }
+//     context.JSON(http.StatusOK, gin.H{"count": count})
+// }
+

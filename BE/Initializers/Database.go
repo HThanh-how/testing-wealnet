@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"time"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -15,10 +14,11 @@ var DB *gorm.DB
 func ConnectToDB() {
 	var err error
 
-	//Get database url from environment variables (defined in .env file)
 	var dsn string = os.Getenv("DB_URL")
-
-	//Connect with postgres
+	if DB != nil {
+		log.Println("Database connection already established")
+		return
+	}
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.New(
 			log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
@@ -30,6 +30,7 @@ func ConnectToDB() {
 				Colorful:                  true,                  // Disable color
 			},
 		),
+		PrepareStmt: false,
 	})
 
 	if err != nil {
