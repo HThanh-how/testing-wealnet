@@ -170,10 +170,28 @@ const Page = () => {
 
   const scrollTable = (direction: "up" | "down") => {
     if (tableRef.current) {
-      const scrollAmount = direction === "up" ? -30 : 30; // Scroll by 30px
+      const scrollAmount = direction === "up" ? -30 : 30; 
       tableRef.current.scrollBy({ top: scrollAmount, behavior: "smooth" });
+  
+      const scrollPosition = tableRef.current.scrollTop;
+      const maxScrollPosition = tableRef.current.scrollHeight - tableRef.current.clientHeight;
+  
+      if (direction === "down" && scrollPosition >= maxScrollPosition - 5) {
+        if (currentPage < totalPages) {
+          setCurrentPage((prev) => prev + 1);
+          tableRef.current.scrollTo({ top: 0, behavior: "smooth" }); 
+        }
+      }
+  
+      if (direction === "up" && scrollPosition <= 5) {
+        if (currentPage > 1) {
+          setCurrentPage((prev) => prev - 1);
+          tableRef.current.scrollTo({ top: tableRef.current.scrollHeight, behavior: "smooth" }); // Scroll to bottom of previous page
+        }
+      }
     }
   };
+  
 
   const handlePageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const page = parseInt(e.target.value, 10);
