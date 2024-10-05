@@ -1,7 +1,5 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Box,
   Button,
@@ -14,13 +12,6 @@ import {
   Th,
   Thead,
   Tr,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
   IconButton,
   useDisclosure,
   useColorMode,
@@ -38,6 +29,9 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
 } from "@chakra-ui/icons";
+import { useEffect, useState } from "react";
+import React from "react";
+import axios from "axios";
 
 interface Kols {
   KolID: number;
@@ -59,33 +53,59 @@ const Page = () => {
   });
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1); // Để lưu tổng số trang
+  const [totalPages, setTotalPages] = useState(1); // Tổng số trang từ backend
   const [loading, setLoading] = useState(true);
   const { colorMode, toggleColorMode } = useColorMode();
   const bgColor = useColorModeValue("gray.50", "gray.900");
+  const tableRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchKols(currentPage, rowsPerPage);
-  }, [currentPage, rowsPerPage]); 
+  }, [currentPage, rowsPerPage]); // Cập nhật khi số trang hoặc số hàng mỗi trang thay đổi
 
   const fetchKols = async (pageIndex: number, pageSize: number) => {
-    setLoading(true); 
+    setLoading(true); // Bắt đầu tải dữ liệu
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/kols?pageIndex=${pageIndex}&pageSize=${pageSize}`
       );
-      setKols(response.data.kol); 
-      setTotalPages(Math.ceil(response.data.totalCount / pageSize));
+      setKols(response.data.kol); // Dữ liệu KOL từ backend
+      setTotalPages(Math.ceil(response.data.totalCount / pageSize)); // Tính toán tổng số trang
     } catch (error) {
       console.error("Error fetching KOLs:", error);
     } finally {
-      setLoading(false); 
+      setLoading(false); // Kết thúc tải dữ liệu
     }
   };
 
   const sortData = (column: string) => {
     const order = sortBy.column === column && sortBy.order === "asc" ? "desc" : "asc";
     setSortBy({ column, order });
+  };
+
+  const scrollTable = (direction: "up" | "down") => {
+    if (tableRef.current) {
+      const scrollAmount = direction === "up" ? -30 : 30;
+      tableRef.current.scrollBy({ top: scrollAmount, behavior: "smooth" });
+
+      const scrollPosition = tableRef.current.scrollTop;
+      const maxScrollPosition = tableRef.current.scrollHeight - tableRef.current.clientHeight;
+
+      // Tự động chuyển trang khi cuộn tới cuối hoặc đầu trang
+      if (direction === "down" && scrollPosition >= maxScrollPosition - 5) {
+        if (currentPage < totalPages) {
+          setCurrentPage((prev) => prev + 1);
+          tableRef.current.scrollTo({ top: 0, behavior: "smooth" }); // Cuộn về đầu trang mới
+        }
+      }
+
+      if (direction === "up" && scrollPosition <= 5) {
+        if (currentPage > 1) {
+          setCurrentPage((prev) => prev - 1);
+          tableRef.current.scrollTo({ top: tableRef.current.scrollHeight, behavior: "smooth" }); // Cuộn về cuối trang trước
+        }
+      }
+    }
   };
 
   const handlePageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,6 +185,18 @@ const Page = () => {
           width="auto"
         />
         <Flex>
+          <IconButton
+            ml={4}
+            icon={<ChevronUpIcon />}
+            aria-label="Scroll up"
+            onClick={() => scrollTable("up")}
+          />
+          <IconButton
+            ml={4}
+            icon={<ChevronDownIcon />}
+            aria-label="Scroll down"
+            onClick={() => scrollTable("down")}
+          />
           <Select
             ml={4}
             value={rowsPerPage}
@@ -220,42 +252,99 @@ const Page = () => {
         </Box>
       ) : (
         <Box position="relative">
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th onClick={() => sortData("KolID")} cursor="pointer">
-                  ID {sortBy.column === "KolID" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
-                </Th>
-                <Th onClick={() => sortData("Education")} cursor="pointer">
-                  Education {sortBy.column === "Education" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
-                </Th>
-                <Th onClick={() => sortData("Language")} cursor="pointer">
-                  Language {sortBy.column === "Language" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
-                </Th>
-                <Th onClick={() => sortData("ExpectedSalary")} cursor="pointer">
-                  Expected Salary {sortBy.column === "ExpectedSalary" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
-                </Th>
-                <Th onClick={() => sortData("VerificationStatus")} cursor="pointer">
-                  Verified {sortBy.column === "VerificationStatus" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
-                </Th>
-                <Th onClick={() => sortData("LivenessStatus")} cursor="pointer">
-                  Liveness Status {sortBy.column === "LivenessStatus" && (sortBy.order === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />)}
-                </Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {sortedKols.map((kol) => (
-                <Tr key={kol.KolID}>
-                  <Td>{kol.KolID}</Td>
-                  <Td>{kol.Education}</Td>
-                  <Td>{kol.Language === "Vietnamese" ? "VN" : "EN"}</Td>
-                  <Td>{kol.ExpectedSalaryEnable ? kol.ExpectedSalary : "N/A"}</Td>
-                  <Td>{kol.VerificationStatus === "Verified" ? <CheckCircleIcon color="green.500" /> : <NotAllowedIcon color="red.500" />}</Td>
-                  <Td>{kol.LivenessStatus === "Passed" ? <CheckCircleIcon color="green.500" /> : <NotAllowedIcon color="red.500" />}</Td>
+          <Box
+            overflow="auto"
+            maxHeight="70vh"
+            ref={tableRef}
+            style={{ position: "relative", zIndex: 1 }}
+          >
+            <Table variant="simple">
+              <Thead position="sticky" top={0} zIndex={10} bg={bgColor}>
+                <Tr>
+                  <Th onClick={() => sortData("KolID")} cursor="pointer">
+                    ID{" "}
+                    {sortBy.column === "KolID" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
+                  </Th>
+                  <Th onClick={() => sortData("Education")} cursor="pointer">
+                    Education{" "}
+                    {sortBy.column === "Education" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
+                  </Th>
+                  <Th onClick={() => sortData("Language")} cursor="pointer">
+                    Language{" "}
+                    {sortBy.column === "Language" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
+                  </Th>
+                  <Th onClick={() => sortData("ExpectedSalary")} cursor="pointer">
+                    Expected Salary{" "}
+                    {sortBy.column === "ExpectedSalary" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
+                  </Th>
+                  <Th onClick={() => sortData("VerificationStatus")} cursor="pointer">
+                    Verified{" "}
+                    {sortBy.column === "VerificationStatus" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
+                  </Th>
+                  <Th onClick={() => sortData("LivenessStatus")} cursor="pointer">
+                    Liveness Status{" "}
+                    {sortBy.column === "LivenessStatus" &&
+                      (sortBy.order === "asc" ? (
+                        <ArrowUpIcon />
+                      ) : (
+                        <ArrowDownIcon />
+                      ))}
+                  </Th>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
+              </Thead>
+              <Tbody>
+                {sortedKols.map((kol, index) => (
+                  <Tr key={kol.KolID}>
+                    <Td>{kol.KolID}</Td>
+                    <Td>{kol.Education}</Td>
+                    <Td>{kol.Language === "Vietnamese" ? "VN" : "EN"}</Td>
+                    <Td>
+                      {kol.ExpectedSalaryEnable ? kol.ExpectedSalary : "N/A"}
+                    </Td>
+                    <Td>
+                      {kol.VerificationStatus === "Verified" ? (
+                        <CheckCircleIcon color="green.500" />
+                      ) : (
+                        <NotAllowedIcon color="red.500" />
+                      )}
+                    </Td>
+                    <Td>
+                      {kol.LivenessStatus === "Passed" ? (
+                        <CheckCircleIcon color="green.500" />
+                      ) : (
+                        <NotAllowedIcon color="red.500" />
+                      )}
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
         </Box>
       )}
 
