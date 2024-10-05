@@ -66,20 +66,20 @@ const Page = () => {
 
   useEffect(() => {
     fetchKols(currentPage, rowsPerPage);
-  }, [currentPage, rowsPerPage]); // Cập nhật mỗi khi `currentPage` hoặc `rowsPerPage` thay đổi
+  }, [currentPage, rowsPerPage]); 
 
   const fetchKols = async (pageIndex: number, pageSize: number) => {
-    setLoading(true); // Bắt đầu tải dữ liệu
+    setLoading(true); 
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/kols?pageIndex=${pageIndex}&pageSize=${pageSize}`
       );
-      setKols(response.data.kol); // Dữ liệu KOL được lấy từ backend
-      setTotalPages(Math.ceil(response.data.totalCount / pageSize)); // Tổng số trang
+      setKols(response.data.kol); 
+      setTotalPages(Math.ceil(response.data.totalCount / pageSize));
     } catch (error) {
       console.error("Error fetching KOLs:", error);
     } finally {
-      setLoading(false); // Kết thúc tải dữ liệu
+      setLoading(false); 
     }
   };
 
