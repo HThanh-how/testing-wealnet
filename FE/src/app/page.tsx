@@ -95,15 +95,17 @@ const Page = () => {
 	if (colorMode !== "dark") {
 		toggleColorMode();
 	}
-    fetchKols();
+  fetchKols( currentPage, rowsPerPage );
   }, []);
 
-  const fetchKols = async () => {
+  const fetchKols = async (pageIndex: number, pageSize: number) => {
+    console.log(process.env.NEXT_PUBLIC_API_URL);
     try {
       setLoading(true); // Bắt đầu tải
       const response = await axios.get(
-        "https://testing-weallnet.vercel.app/kols?pageIndex=1&pageSize=40"
+        `${process.env.NEXT_PUBLIC_API_URL}/kols?pageIndex=${pageIndex}&pageSize=${pageSize}`
       );
+
       setKols(response.data.kol);
     } catch (error) {
       console.error("Error fetching KOLs:", error);
