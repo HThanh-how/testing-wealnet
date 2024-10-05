@@ -8,7 +8,7 @@ import (
 	"wan-api-kol-event/Initializers"
 )
 
-func GetKolLogic(pageIndex int, pageSize int) ([]*DTO.KolDTO, error) {
+func GetKolLogic() ([]*DTO.KolDTO, error) {
 	var kols []*DTO.KolDTO
 	startTime := time.Now()
 
@@ -23,7 +23,7 @@ func GetKolLogic(pageIndex int, pageSize int) ([]*DTO.KolDTO, error) {
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// 																					//
-	// 	// * Get Kols from the database based on the range of pageIndex and pageSize 	//
+	// 	   * Get Kols from the database based on the range of pageIndex and pageSize 	//
 	// 																					//
 	//////////////////////////////////////////////////////////////////////////////////////
 
