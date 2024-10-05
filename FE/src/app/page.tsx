@@ -1,5 +1,7 @@
-"use client"
+"use client";
 
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Box,
   Button,
@@ -12,6 +14,13 @@ import {
   Th,
   Thead,
   Tr,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
   IconButton,
   useDisclosure,
   useColorMode,
@@ -29,9 +38,6 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
 } from "@chakra-ui/icons";
-import { useEffect, useState } from "react";
-import React from "react";
-import axios from "axios";
 
 interface Kols {
   KolID: number;
@@ -40,7 +46,26 @@ interface Kols {
   Education: string;
   ExpectedSalary: number;
   ExpectedSalaryEnable: boolean;
+  ChannelSettingTypeID: number;
+  IDFrontURL: string;
+  IDBackURL: string;
+  PortraitURL: string;
+  RewardID: number;
+  PaymentMethodID: number;
+  TestimonialsID: number;
   VerificationStatus: string;
+  Enabled: boolean;
+  ActiveDate: Date;
+  Active: boolean;
+  CreatedBy: string;
+  CreatedDate: Date;
+  ModifiedBy: string;
+  ModifiedDate: Date;
+  IsRemove: boolean;
+  IsOnBoarding: boolean;
+  Code: string;
+  PortraitRightURL: string;
+  PortraitLeftURL: string;
   LivenessStatus: string;
 }
 
@@ -53,28 +78,30 @@ const Page = () => {
   });
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1); // Tổng số trang từ backend
+  const [totalPages, setTotalPages] = useState(1); // Total pages from backend
   const [loading, setLoading] = useState(true);
+  const [selectedKolIndex, setSelectedKolIndex] = useState<number | null>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const { colorMode, toggleColorMode } = useColorMode();
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const tableRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchKols(currentPage, rowsPerPage);
-  }, [currentPage, rowsPerPage]); // Cập nhật khi số trang hoặc số hàng mỗi trang thay đổi
+  }, [currentPage, rowsPerPage]); // Fetch data again when page or rows per page changes
 
   const fetchKols = async (pageIndex: number, pageSize: number) => {
-    setLoading(true); // Bắt đầu tải dữ liệu
+    setLoading(true); // Start loading
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/kols?pageIndex=${pageIndex}&pageSize=${pageSize}`
       );
-      setKols(response.data.kol); // Dữ liệu KOL từ backend
-      setTotalPages(Math.ceil(response.data.totalCount / pageSize)); // Tính toán tổng số trang
+      setKols(response.data.kol); // KOL data from backend
+      setTotalPages(Math.ceil(response.data.totalCount / pageSize)); // Calculate total pages
     } catch (error) {
       console.error("Error fetching KOLs:", error);
     } finally {
-      setLoading(false); // Kết thúc tải dữ liệu
+      setLoading(false); // Stop loading
     }
   };
 
@@ -91,18 +118,17 @@ const Page = () => {
       const scrollPosition = tableRef.current.scrollTop;
       const maxScrollPosition = tableRef.current.scrollHeight - tableRef.current.clientHeight;
 
-      // Tự động chuyển trang khi cuộn tới cuối hoặc đầu trang
       if (direction === "down" && scrollPosition >= maxScrollPosition - 5) {
         if (currentPage < totalPages) {
           setCurrentPage((prev) => prev + 1);
-          tableRef.current.scrollTo({ top: 0, behavior: "smooth" }); // Cuộn về đầu trang mới
+          tableRef.current.scrollTo({ top: 0, behavior: "smooth" }); 
         }
       }
 
       if (direction === "up" && scrollPosition <= 5) {
         if (currentPage > 1) {
           setCurrentPage((prev) => prev - 1);
-          tableRef.current.scrollTo({ top: tableRef.current.scrollHeight, behavior: "smooth" }); // Cuộn về cuối trang trước
+          tableRef.current.scrollTo({ top: tableRef.current.scrollHeight, behavior: "smooth" }); 
         }
       }
     }
@@ -113,6 +139,11 @@ const Page = () => {
     if (!isNaN(page) && page > 0 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const openModal = (index: number) => {
+    setSelectedKolIndex(index);
+    onOpen();
   };
 
   const filteredKols = kols.filter((kol) => {
@@ -158,12 +189,7 @@ const Page = () => {
 
   return (
     <Box p={5} bg={bgColor} minHeight="100vh">
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={5}
-      >
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={5}>
         <Heading as="h1">KoL List</Heading>
         <IconButton
           icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
@@ -172,12 +198,7 @@ const Page = () => {
         />
       </Box>
 
-      <Box
-        mb={5}
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-      >
+      <Box mb={5} display="flex" justifyContent="space-between" alignItems="center">
         <Input
           placeholder="Tìm kiếm"
           value={filterText}
@@ -258,7 +279,7 @@ const Page = () => {
             ref={tableRef}
             style={{ position: "relative", zIndex: 1 }}
           >
-            <Table variant="simple">
+            <Table variant="simple" position="relative">
               <Thead position="sticky" top={0} zIndex={10} bg={bgColor}>
                 <Tr>
                   <Th onClick={() => sortData("KolID")} cursor="pointer">
@@ -319,13 +340,11 @@ const Page = () => {
               </Thead>
               <Tbody>
                 {sortedKols.map((kol, index) => (
-                  <Tr key={kol.KolID}>
+                  <Tr key={kol.KolID} onClick={() => openModal(index)} cursor="pointer">
                     <Td>{kol.KolID}</Td>
                     <Td>{kol.Education}</Td>
                     <Td>{kol.Language === "Vietnamese" ? "VN" : "EN"}</Td>
-                    <Td>
-                      {kol.ExpectedSalaryEnable ? kol.ExpectedSalary : "N/A"}
-                    </Td>
+                    <Td>{kol.ExpectedSalaryEnable ? kol.ExpectedSalary : "N/A"}</Td>
                     <Td>
                       {kol.VerificationStatus === "Verified" ? (
                         <CheckCircleIcon color="green.500" />
@@ -368,6 +387,184 @@ const Page = () => {
           Trang sau
         </Button>
       </Box>
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Thông tin chi tiết KOL</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody maxHeight="400px" overflow="auto">
+            {" "}
+            {selectedKolIndex !== null && (
+			
+			<Box>
+			  <Heading as="h3" size="md">
+				Thông tin cá nhân
+			  </Heading>
+			  <p>ID: {kols[selectedKolIndex]?.KolID}</p>
+			  <p>Giáo dục: {kols[selectedKolIndex].Education}</p>
+			  <p>
+				Ngôn ngữ:{" "}
+				{kols[selectedKolIndex].Language === "Vietnamese" ? "VN" : "EN"}
+			  </p>
+			  <Heading as="h3" size="md" mt={4}>
+				Chi tiết công việc
+			  </Heading>
+			  <p>
+				Mức lương mong muốn:{" "}
+				{kols[selectedKolIndex].ExpectedSalaryEnable
+				  ? kols[selectedKolIndex].ExpectedSalary
+				  : "N/A"}
+			  </p>
+			  <p>
+				Trạng thái xác minh:{" "}
+				{kols[selectedKolIndex].VerificationStatus === "Verified" ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>
+				Trạng thái liveness:{" "}
+				{kols[selectedKolIndex].LivenessStatus === "Passed" ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <Heading as="h3" size="md" mt={4}>
+				Thông tin khác
+			  </Heading>
+			  <p>UserProfileID: {kols[selectedKolIndex].UserProfileID}</p>
+			  <p>
+				ChannelSettingTypeID: {kols[selectedKolIndex].ChannelSettingTypeID}
+			  </p>
+			  <p>RewardID: {kols[selectedKolIndex].RewardID}</p>
+			  <p>PaymentMethodID: {kols[selectedKolIndex].PaymentMethodID}</p>
+			  <p>TestimonialsID: {kols[selectedKolIndex].TestimonialsID}</p>
+			  <p>
+				Đang hoạt động:{" "}
+				{kols[selectedKolIndex].Enabled ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>
+				Ngày kích hoạt:{" "}
+				{new Date(kols[selectedKolIndex].ActiveDate).toLocaleDateString()}
+			  </p>
+			  <p>
+				Hoạt động:{" "}
+				{kols[selectedKolIndex].Active ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>Người tạo: {kols[selectedKolIndex].CreatedBy}</p>
+			  <p>
+				Ngày tạo:{" "}
+				{new Date(kols[selectedKolIndex].CreatedDate).toLocaleDateString()}
+			  </p>
+			  <p>Người sửa đổi: {kols[selectedKolIndex].ModifiedBy}</p>
+			  <p>
+				Ngày sửa đổi:{" "}
+				{new Date(kols[selectedKolIndex].ModifiedDate).toLocaleDateString()}
+			  </p>
+			  <p>
+				Đã xóa:{" "}
+				{kols[selectedKolIndex].IsRemove ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>
+				Đang onboarding:{" "}
+				{kols[selectedKolIndex].IsOnBoarding ? (
+				  <CheckCircleIcon color="green.500" />
+				) : (
+				  <NotAllowedIcon color="red.500" />
+				)}
+			  </p>
+			  <p>Mã: {kols[selectedKolIndex].Code}</p>
+			  <p>
+				URL chân dung phải:{" "}
+				<a
+				  href={kols[selectedKolIndex].PortraitRightURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL chân dung trái:{" "}
+				<a
+				  href={kols[selectedKolIndex].PortraitLeftURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL mặt trước CMND:{" "}
+				<a
+				  href={kols[selectedKolIndex].IDFrontURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL mặt sau CMND:{" "}
+				<a
+				  href={kols[selectedKolIndex].IDBackURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			  <p>
+				URL chân dung:{" "}
+				<a
+				  href={kols[selectedKolIndex].PortraitURL}
+				  target="_blank"
+				  rel="noopener noreferrer"
+				>
+				  Link
+				</a>
+			  </p>
+			</Box>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              mr={4}
+              onClick={() =>
+                setSelectedKolIndex((prev) => (prev && prev > 0 ? prev - 1 : 0))
+              }
+              disabled={selectedKolIndex === 0}
+            >
+              Trước
+            </Button>
+            <Button
+              onClick={() =>
+                setSelectedKolIndex((prev) =>
+                  prev !== null && prev < kols.length - 1 ? prev + 1 : prev
+                )
+              }
+              disabled={selectedKolIndex === kols.length - 1}
+            >
+              Sau
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
